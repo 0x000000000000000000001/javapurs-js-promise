@@ -9,3 +9,6 @@ package-lock.json
 output/
 output.bak/
 /generated-docs/
+java_output/
+classes/
+.spago/
