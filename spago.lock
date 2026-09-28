@@ -845,6 +845,35 @@
     }
   },
   "packages": {
+    "arrays": {
+      "type": "local",
+      "path": "../javapurs-arrays",
+      "dependencies": [
+        "bifunctors",
+        "control",
+        "foldable-traversable",
+        "functions",
+        "maybe",
+        "nonempty",
+        "partial",
+        "prelude",
+        "safe-coerce",
+        "st",
+        "tailrec",
+        "tuples",
+        "unfoldable",
+        "unsafe-coerce"
+      ]
+    },
+    "assert": {
+      "type": "local",
+      "path": "../javapurs-assert",
+      "dependencies": [
+        "console",
+        "effect",
+        "prelude"
+      ]
+    },
     "bifunctors": {
       "type": "registry",
       "version": "6.1.0",
@@ -926,6 +955,22 @@
         "prelude"
       ]
     },
+    "enums": {
+      "type": "local",
+      "path": "../javapurs-enums",
+      "dependencies": [
+        "control",
+        "either",
+        "gen",
+        "maybe",
+        "newtype",
+        "nonempty",
+        "partial",
+        "prelude",
+        "tuples",
+        "unfoldable"
+      ]
+    },
     "exceptions": {
       "type": "local",
       "path": "../javapurs-exceptions",
@@ -961,6 +1006,39 @@
         "tuples"
       ]
     },
+    "foreign": {
+      "type": "local",
+      "path": "../javapurs-foreign",
+      "dependencies": [
+        "either",
+        "functions",
+        "identity",
+        "integers",
+        "lists",
+        "maybe",
+        "prelude",
+        "strings",
+        "transformers"
+      ]
+    },
+    "foreign-object": {
+      "type": "local",
+      "path": "../javapurs-foreign-object",
+      "dependencies": [
+        "arrays",
+        "foldable-traversable",
+        "functions",
+        "gen",
+        "lists",
+        "maybe",
+        "prelude",
+        "st",
+        "tailrec",
+        "tuples",
+        "typelevel-prelude",
+        "unfoldable"
+      ]
+    },
     "functions": {
       "type": "local",
       "path": "../javapurs-functions",
@@ -988,6 +1066,23 @@
         "unsafe-coerce"
       ]
     },
+    "gen": {
+      "type": "registry",
+      "version": "4.0.0",
+      "integrity": "sha256-kyOateeOtQa07vfTMYeSuCKdelgKE1R65fwKkZ10wsY=",
+      "dependencies": [
+        "either",
+        "foldable-traversable",
+        "identity",
+        "maybe",
+        "newtype",
+        "nonempty",
+        "prelude",
+        "tailrec",
+        "tuples",
+        "unfoldable"
+      ]
+    },
     "identity": {
       "type": "registry",
       "version": "6.0.0",
@@ -999,6 +1094,15 @@
         "prelude"
       ]
     },
+    "integers": {
+      "type": "local",
+      "path": "../javapurs-integers",
+      "dependencies": [
+        "maybe",
+        "numbers",
+        "prelude"
+      ]
+    },
     "invariant": {
       "type": "registry",
       "version": "6.0.0",
@@ -1006,6 +1110,49 @@
       "dependencies": [
         "control",
         "prelude"
+      ]
+    },
+    "lazy": {
+      "type": "local",
+      "path": "../javapurs-lazy",
+      "dependencies": [
+        "control",
+        "foldable-traversable",
+        "invariant",
+        "prelude"
+      ]
+    },
+    "lcg": {
+      "type": "registry",
+      "version": "4.0.0",
+      "integrity": "sha256-bUYyfXYmjTn7zSpj2hTiePywzsuD80fCjkonsrpdGOw=",
+      "dependencies": [
+        "effect",
+        "integers",
+        "maybe",
+        "numbers",
+        "partial",
+        "prelude",
+        "random"
+      ]
+    },
+    "lists": {
+      "type": "registry",
+      "version": "7.0.0",
+      "integrity": "sha256-/mGd7wLoU+wsTcqii7SSUByxsvwvjnu2PjwAD47yYb4=",
+      "dependencies": [
+        "bifunctors",
+        "control",
+        "foldable-traversable",
+        "lazy",
+        "maybe",
+        "newtype",
+        "nonempty",
+        "partial",
+        "prelude",
+        "tailrec",
+        "tuples",
+        "unfoldable"
       ]
     },
     "maybe": {
@@ -1028,6 +1175,38 @@
         "safe-coerce"
       ]
     },
+    "nonempty": {
+      "type": "registry",
+      "version": "7.0.0",
+      "integrity": "sha256-Ctkq8/+KiGqCE53Y/LvibA/coy7ev9HtRZU+GYS7yfQ=",
+      "dependencies": [
+        "control",
+        "foldable-traversable",
+        "maybe",
+        "prelude",
+        "tuples",
+        "unfoldable"
+      ]
+    },
+    "nullable": {
+      "type": "local",
+      "path": "../javapurs-nullable",
+      "dependencies": [
+        "assert",
+        "effect",
+        "functions",
+        "maybe",
+        "prelude"
+      ]
+    },
+    "numbers": {
+      "type": "local",
+      "path": "../javapurs-numbers",
+      "dependencies": [
+        "functions",
+        "maybe"
+      ]
+    },
     "orders": {
       "type": "registry",
       "version": "6.0.0",
@@ -1036,6 +1215,11 @@
         "newtype",
         "prelude"
       ]
+    },
+    "partial": {
+      "type": "local",
+      "path": "../javapurs-partial",
+      "dependencies": []
     },
     "prelude": {
       "type": "local",
@@ -1057,12 +1241,139 @@
         "tuples"
       ]
     },
+    "quickcheck": {
+      "type": "local",
+      "path": "../javapurs-quickcheck",
+      "dependencies": [
+        "arrays",
+        "console",
+        "control",
+        "effect",
+        "either",
+        "enums",
+        "exceptions",
+        "foldable-traversable",
+        "gen",
+        "identity",
+        "integers",
+        "lazy",
+        "lcg",
+        "lists",
+        "maybe",
+        "newtype",
+        "nonempty",
+        "numbers",
+        "partial",
+        "prelude",
+        "record",
+        "st",
+        "strings",
+        "tailrec",
+        "transformers",
+        "tuples",
+        "unfoldable"
+      ]
+    },
+    "random": {
+      "type": "local",
+      "path": "../javapurs-random",
+      "dependencies": [
+        "effect",
+        "integers"
+      ]
+    },
+    "record": {
+      "type": "local",
+      "path": "../javapurs-record",
+      "dependencies": [
+        "functions",
+        "prelude",
+        "unsafe-coerce"
+      ]
+    },
+    "refs": {
+      "type": "local",
+      "path": "../javapurs-refs",
+      "dependencies": [
+        "effect",
+        "prelude"
+      ]
+    },
     "safe-coerce": {
       "type": "registry",
       "version": "2.0.0",
       "integrity": "sha256-EJrxtKt5xC7TYjBZrSBO/J7Aw3DmtilYjt4olpAXWVc=",
       "dependencies": [
         "unsafe-coerce"
+      ]
+    },
+    "st": {
+      "type": "local",
+      "path": "../javapurs-st",
+      "dependencies": [
+        "partial",
+        "prelude",
+        "tailrec",
+        "unsafe-coerce"
+      ]
+    },
+    "strings": {
+      "type": "local",
+      "path": "../javapurs-strings",
+      "dependencies": [
+        "arrays",
+        "control",
+        "either",
+        "enums",
+        "foldable-traversable",
+        "gen",
+        "integers",
+        "maybe",
+        "newtype",
+        "nonempty",
+        "partial",
+        "prelude",
+        "tailrec",
+        "tuples",
+        "unfoldable",
+        "unsafe-coerce"
+      ]
+    },
+    "tailrec": {
+      "type": "registry",
+      "version": "6.1.0",
+      "integrity": "sha256-xrorCfP0xV1wubs27idQCHQqdvSUuqmmL/am7Ji1wVU=",
+      "dependencies": [
+        "bifunctors",
+        "effect",
+        "either",
+        "identity",
+        "maybe",
+        "partial",
+        "prelude",
+        "refs"
+      ]
+    },
+    "transformers": {
+      "type": "registry",
+      "version": "6.1.0",
+      "integrity": "sha256-QJmgNT/y7ljPHSsXaW4zxF/982BFiQ90KNL1g/NtEOQ=",
+      "dependencies": [
+        "control",
+        "distributive",
+        "effect",
+        "either",
+        "exceptions",
+        "foldable-traversable",
+        "identity",
+        "lazy",
+        "maybe",
+        "newtype",
+        "prelude",
+        "st",
+        "tailrec",
+        "tuples",
+        "unfoldable"
       ]
     },
     "tuples": {
@@ -1080,6 +1391,26 @@
       "version": "4.0.1",
       "integrity": "sha256-BBqYOSnAKmayRvR5mtZoCf4SlYs2ipatD/+5nQx73aw=",
       "dependencies": []
+    },
+    "typelevel-prelude": {
+      "type": "registry",
+      "version": "7.0.0",
+      "integrity": "sha256-+pHi14/40mTj/+lmCWqL0T7iXIXD1+NSg/KItyyoB0A=",
+      "dependencies": [
+        "prelude",
+        "type-equality"
+      ]
+    },
+    "unfoldable": {
+      "type": "local",
+      "path": "../javapurs-unfoldable",
+      "dependencies": [
+        "foldable-traversable",
+        "maybe",
+        "partial",
+        "prelude",
+        "tuples"
+      ]
     },
     "unsafe-coerce": {
       "type": "local",
