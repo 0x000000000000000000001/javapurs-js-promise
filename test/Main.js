@@ -1,2 +1,2 @@
-export const delay = function(ms) { return function() { return new Promise(function(resolve) { setTimeout(resolve, ms); }); }; };
-export const failAfter = function(ms) { return function() { return new Promise(function(resolve, reject) { setTimeout(reject, ms); }); }; };
+export const delay = ms => () => new Promise(resolve => setTimeout(() => resolve(ms), ms));
+export const failAfter = ms => () => new Promise((_, reject) => setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms));

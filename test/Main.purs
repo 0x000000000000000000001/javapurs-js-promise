@@ -2,139 +2,130 @@ module Test.Main where
 
 import Prelude
 
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
+import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Exception (error, message)
 import Effect.Ref as Ref
 import Promise as Promise
-import Promise.Internal as P
 import Promise.Lazy as Lazy
 import Promise.Rejection as Rejection
 import Test.Assert as Assert
 
-foreign import delay :: Int -> Effect (P.Promise Int)
-foreign import failAfter :: Int -> Effect (P.Promise Int)
+foreign import delay :: Int -> Effect (Promise.Promise Int)
+foreign import failAfter :: Int -> Effect (Promise.Promise Int)
 
+-- Observe both outcomes before asserting, so a catch cannot swallow an
+-- assertion that a promise should have rejected. The returned child is awaited.
+outcome :: forall a. Promise.Promise a -> Effect (Promise.Promise (Either String a))
+outcome = Promise.thenOrCatch
+  (pure <<< Promise.resolve <<< Right)
+  (pure <<< Promise.resolve <<< Left <<< rejectionMessage)
+  where
+  rejectionMessage reason = case Rejection.toError reason of
+    Just exception -> message exception
+    Nothing -> "non-Error rejection"
+
+deferred :: Effect
+  { promise :: Promise.Promise Int
+  , resolve :: Int -> Effect Unit
+  , reject :: String -> Effect Unit
+  }
+deferred = do
+  success <- Ref.new (\_ -> pure unit)
+  failure <- Ref.new (\_ -> pure unit)
+  promise <- Promise.new \resolve reject -> do
+    Ref.write resolve success
+    Ref.write reject failure
+  pure
+    { promise
+    , resolve: \value -> Ref.read success >>= (_ $ value)
+    , reject: \text -> Ref.read failure >>= (_ $ Rejection.fromError (error text))
+    }
+
+check :: forall a. Eq a => Show a => String -> a -> a -> Lazy.LazyPromise Unit
+check label expected actual = liftEffect do
+  Assert.assertEqual { expected, actual }
+  log ("[OK] " <> label)
+
+-- One observed chain owns every assertion and finalizer. The JVM test wrapper
+-- waits for suite; main preserves the usual JavaScript entrypoint.
 main :: Effect Unit
-main = do
-  log "Testing Promise.new, then_, catch, finally, all, race"
+main = void $ suite >>= Promise.then_ (\_ -> log "Promise suite passed" $> Promise.resolve unit)
 
-  -- Test resolve
-  _ <- Promise.new (\res _ -> res "success")
-    >>= Promise.then_
-      ( \msg -> do
-          Assert.assertEqual { actual: msg, expected: "success" }
-          pure (Promise.resolve unit)
-      )
+suite :: Effect (Promise.Promise Unit)
+suite = Lazy.toPromise do
+  resolved <- Lazy.fromPromise $ Promise.new (\res _ -> res "success")
+  check "new/resolve" "success" resolved
 
-  -- Test reject and catch
-  _ <- Promise.new (\(_res :: Unit -> Effect Unit) rej -> rej (Rejection.fromError (error "fail")))
-    >>= Promise.catch
-      ( \err -> do
-          case Rejection.toError err of
-            Just e -> Assert.assert' "Should be fail" (message e == "fail")
-            Nothing -> Assert.assert' "Expected an Error" false
-          pure (Promise.resolve unit)
-      )
+  recovered <- Lazy.fromPromise $ Promise.new (\(_ :: String -> Effect Unit) reject -> reject (Rejection.fromError (error "fail")))
+    >>= Promise.catch (\reason -> pure $ Promise.resolve case Rejection.toError reason of
+      Just exception -> message exception
+      Nothing -> "non-Error rejection")
+  check "new/reject/catch" "fail" recovered
 
-  -- Test all
-  _ <- Promise.all [ Promise.resolve 1, Promise.resolve 2, Promise.resolve 3 ]
-    >>= Promise.then_
-      ( \arr -> do
-          Assert.assertEqual { actual: arr, expected: [ 1, 2, 3 ] }
-          pure (Promise.resolve unit)
-      )
+  -- Register all/race on pending values and settle in a chosen order, without
+  -- assuming any ordering between JVM threads or wall-clock timers.
+  first <- liftEffect deferred
+  second <- liftEffect deferred
+  both <- liftEffect $ Promise.all [ first.promise, second.promise ]
+  liftEffect $ second.resolve 2 *> first.resolve 1
+  ordered <- Lazy.fromPromise $ pure both
+  check "all/pending/order" [ 1, 2 ] ordered
 
-  -- Test all with failure
-  pFail <- failAfter 50
-  pDelay <- delay 100
-  _ <- Promise.all [ pDelay, pFail ]
-    >>= Promise.then_
-      ( \_ -> do
-          Assert.assert' "Promise.all should have failed" false
-          pure (Promise.resolve unit)
-      )
-    >>= Promise.catch (\_ -> pure (Promise.resolve unit))
+  failing <- liftEffect deferred
+  remaining <- liftEffect deferred
+  allFailed <- liftEffect $ Promise.all [ remaining.promise, failing.promise ] >>= outcome
+  liftEffect $ failing.reject "all failed" *> remaining.resolve 10
+  allResult <- Lazy.fromPromise $ pure allFailed
+  check "all/rejection" (Left "all failed") allResult
 
-  -- Test race
-  p1 <- failAfter 500
-  p2 <- delay 10 >>= Promise.then_ (\_ -> pure (Promise.resolve 42))
-  _ <- Promise.race [ p1, p2 ]
-    >>= Promise.then_
-      ( \res -> do
-          Assert.assertEqual { actual: res, expected: 42 }
-          pure (Promise.resolve unit)
-      )
+  loser <- liftEffect deferred
+  winner <- liftEffect deferred
+  raced <- liftEffect $ Promise.race [ loser.promise, winner.promise ]
+  loserResult <- liftEffect $ outcome loser.promise
+  liftEffect $ winner.resolve 42 *> loser.reject "lost"
+  raceResult <- Lazy.fromPromise $ pure raced
+  observedLoser <- Lazy.fromPromise $ pure loserResult
+  check "race/pending/loser observed" { winner: 42, loser: Left "lost" } { winner: raceResult, loser: observedLoser }
 
-  -- Test finally (success case)
-  ref1 <- Ref.new 0
-  _ <- Promise.new (\res _ -> res "ok")
-    >>= Promise.finally (Ref.modify_ (_ + 1) ref1 >>= \_ -> pure (Promise.resolve unit))
-    >>= Promise.then_
-      ( \res -> do
-          Assert.assertEqual { actual: res, expected: "ok" }
-          val <- Ref.read ref1
-          Assert.assertEqual { actual: val, expected: 1 }
-          pure (Promise.resolve unit)
-      )
+  ref1 <- liftEffect $ Ref.new 0
+  finalized <- Lazy.fromPromise $ Promise.finally
+    (delay 10 >>= Promise.then_ (\_ -> Ref.modify_ (_ + 1) ref1 $> Promise.resolve unit))
+    (Promise.resolve "ok")
+  count1 <- liftEffect $ Ref.read ref1
+  check "finally/success/await cleanup" { value: "ok", count: 1 } { value: finalized, count: count1 }
 
-  -- Test finally (failure case)
-  ref2 <- Ref.new 0
-  _ <- Promise.new (\(_res :: Unit -> Effect Unit) rej -> rej (Rejection.fromError (error "fail")))
-    >>= Promise.finally (Ref.modify_ (_ + 1) ref2 >>= \_ -> pure (Promise.resolve unit))
-    >>= Promise.catch
-      ( \_ -> do
-          val <- Ref.read ref2
-          Assert.assertEqual { actual: val, expected: 1 }
-          pure (Promise.resolve unit)
-      )
+  ref2 <- liftEffect $ Ref.new 0
+  finalizedFailure <- Lazy.fromPromise $ Promise.finally
+    (delay 10 >>= Promise.then_ (\_ -> Ref.modify_ (_ + 1) ref2 $> Promise.resolve unit))
+    (Promise.reject (Rejection.fromError (error "fail")) :: Promise.Promise Int) >>= outcome
+  count2 <- liftEffect $ Ref.read ref2
+  check "finally/rejection/await cleanup" { value: Left "fail", count: 1 } { value: finalizedFailure, count: count2 }
 
-  log "Testing Promise.Lazy"
+  lazyResult <- Lazy.fromPromise $ Lazy.toPromise do
+    v1 <- Lazy.new (\res _ -> res 10)
+    pure (v1 + 20)
+  check "Lazy/bind" 30 lazyResult
 
-  let
-    lazyChain = do
-      v1 <- Lazy.new (\res _ -> res 10)
-      v2 <- pure 20
-      pure (v1 + v2)
+  lazyRecovered <- Lazy.fromPromise $ Lazy.toPromise $ Lazy.catch (\_ -> pure 99) do
+    value <- Lazy.fromPromise (failAfter 10)
+    pure (value + 1)
+  check "Lazy/catch" 99 lazyRecovered
 
-  _ <- Lazy.toPromise lazyChain
-    >>= Promise.then_
-      ( \res -> do
-          Assert.assertEqual { actual: res, expected: 30 }
-          pure (Promise.resolve unit)
-      )
+  ref3 <- liftEffect $ Ref.new 0
+  lazyFinalized <- Lazy.fromPromise $ Lazy.toPromise $ Lazy.finally
+    (Lazy.fromPromise (delay 10) *> liftEffect (Ref.modify_ (_ + 1) ref3))
+    (pure "ok")
+  count3 <- liftEffect $ Ref.read ref3
+  check "Lazy/finally" { value: "ok", count: 1 } { value: lazyFinalized, count: count3 }
 
-  let
-    lazyFail = do
-      v1 <- Lazy.fromPromise (failAfter 10)
-      pure (v1 + 1)
+  lazyAll <- Lazy.fromPromise $ Lazy.toPromise $ Lazy.all [ pure 1, pure 2, pure 3 ]
+  check "Lazy/all" [ 1, 2, 3 ] lazyAll
 
-  _ <- Lazy.toPromise (Lazy.catch (\_ -> pure 99) lazyFail)
-    >>= Promise.then_
-      ( \res -> do
-          Assert.assertEqual { actual: res, expected: 99 }
-          pure (Promise.resolve unit)
-      )
-
-  ref3 <- Ref.new 0
-  let lazyFinally = Lazy.finally (Lazy.fromPromise (Ref.modify_ (_ + 1) ref3 >>= \_ -> pure (Promise.resolve unit))) (pure "ok")
-  _ <- Lazy.toPromise lazyFinally
-    >>= Promise.then_
-      ( \res -> do
-          Assert.assertEqual { actual: res, expected: "ok" }
-          val <- Ref.read ref3
-          Assert.assertEqual { actual: val, expected: 1 }
-          pure (Promise.resolve unit)
-      )
-
-  -- Lazy All
-  let lazyAll = Lazy.all [ pure 1, pure 2, pure 3 ]
-  _ <- Lazy.toPromise lazyAll
-    >>= Promise.then_
-      ( \res -> do
-          Assert.assertEqual { actual: res, expected: [ 1, 2, 3 ] }
-          pure (Promise.resolve unit)
-      )
-
-  log "Done!"
+  waited <- Lazy.fromPromise (delay 10)
+  check "timer/resolve" 10 waited
+  timedFailure <- Lazy.fromPromise $ failAfter 10 >>= outcome
+  check "timer/reject" (Left "timed out after 10ms") timedFailure

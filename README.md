@@ -18,6 +18,13 @@ Run `./bin/test-runtime` for deterministic Java checks of pending values, races,
 exceptions, cleanup and deep chains. It needs Node and a JDK. The sibling
 `javapurs-js-promise-aff/bin/test-runtime` exercises the actual PureScript bridge.
 
+`./bin/test` runs 13 PureScript checks in an isolated workspace. A single observed
+chain covers assertions, rejections, losing race inputs and asynchronous cleanup;
+the Java timer fixtures return genuinely pending promises. The runner awaits
+completion and probes delayed failures, rejection, timeout and premature exit.
+See the [port-suite recipe](../javapurs/docs/testing.md#suites-asynchrones-des-ports)
+for the built-backend/TAST/Spago/JDK prerequisites and logs.
+
 ## Installation
 
 ```
