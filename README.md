@@ -6,6 +6,18 @@
 
 Types and low-level implementations for JavaScript Promises.
 
+## Java port
+
+The Java `PromiseValue` supports pending settlement, adoption and observers.
+The first resolution/rejection wins; `all` retains input order and `race` selects
+the first settlement, including rejection. Reactions run eagerly on Java threads,
+outside runtime locks, with a per-thread trampoline rather than a JS microtask queue.
+See the [Java Promise contract](../javapurs/docs/ffi-runtime.md#promesses).
+
+Run `./bin/test-runtime` for deterministic Java checks of pending values, races,
+exceptions, cleanup and deep chains. It needs Node and a JDK. The sibling
+`javapurs-js-promise-aff/bin/test-runtime` exercises the actual PureScript bridge.
+
 ## Installation
 
 ```
@@ -15,4 +27,3 @@ spago install js-promise
 ## Documentation
 
 Module documentation is [published on Pursuit](http://pursuit.purescript.org/packages/purescript-js-promise).
-
