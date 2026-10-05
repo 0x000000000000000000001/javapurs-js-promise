@@ -12,3 +12,6 @@ output.bak/
 java_output/
 classes/
 .spago/
+*.class
+*.java.bak
+.DS_Store
