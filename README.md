@@ -1,5 +1,9 @@
 # purescript-js-promise
 
+Java port of the PureScript `js-promise` package. See the
+[port maintenance guide](../javapurs/docs/port-maintenance.md)
+for source layout, local dependency selection and JVM validation.
+
 [![Latest release](http://img.shields.io/github/release/purescript-contrib/purescript-js-promise.svg)](https://github.com/purescript-web/purescript-js-promise/releases)
 [![Build status](https://github.com/purescript-contrib/purescript-js-promise/workflows/CI/badge.svg?branch=master)](https://github.com/purescript-web/purescript-js-promise/actions?query=workflow%3ACI+branch%3Amaster)
 [![Pursuit](https://pursuit.purescript.org/packages/purescript-js-promise/badge)](https://pursuit.purescript.org/packages/purescript-js-promise)
